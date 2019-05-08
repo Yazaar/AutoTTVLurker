@@ -30,7 +30,7 @@ Copy your Client ID, you may close the window. You are now done in your browser.
 One more step, head over to the downloaded files, rightclick and edit the Settings.json file.<br>
 Paste your client ID.<br>
 "streamers" includes a list of all streams that you want to keep up with. Insert them here and follow the example. (remove the example ones!)<br>
-"save_data" tells the software to save your cridentials in the directory which means that it saves you from relogging in on boot.<br>
+"save_data" tells the software to save your cridentials in the directory which means that it saves you from repeatedly logging in on boot.<br>
 "check_streams_interval" is the amount of minutes between each check to the twitch API for livestreams.<br>
 "loop_interval" is the amount of minutes before the browser loop thru all tabs, this may be essential to keep streams active (now or in the future).
 <img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step8v2.png">
