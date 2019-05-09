@@ -1,5 +1,6 @@
 <h1>Auto TTV Lurker</h1>
-all cridentials seen in these images are removed.
+All cridentials seen in these images are removed.<br>
+Please, do not specify more than 100 channels. That is the limit for each request to twitch. Thanks :)
 <h3>Setup:</h3>
 Click on the images for better quality!
 <br><br>
