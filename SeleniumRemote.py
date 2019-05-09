@@ -103,7 +103,7 @@ def RemoveStream(NewData):
 tkthread = threading.Thread(target=bootTk)
 tkthread.daemon = True
 
-ActiveTabs = ["****"]
+ActiveTabs = ["****", "a", "b"]
 
 driver = webdriver.Chrome()
 
@@ -164,6 +164,9 @@ tkthread.start()
 Timestamp = time.time() - 60 * WaitTime
 Timestamp2 = time.time()
 
+print("Ready")
+time.sleep(10)
+
 while True:
     if QueueQuit == True:
         break
@@ -189,7 +192,7 @@ while True:
         for i in res:
             if i["type"] == "live":
                 temp.append(i["user_name"].lower())
-        for i in ActiveTabs:
+        for i in reversed(ActiveTabs):
             if i == "****":
                 continue
             if i not in temp:
