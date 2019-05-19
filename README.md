@@ -1,7 +1,7 @@
 <h1>Auto TTV Lurker</h1>
 <h4>Warning, the remote which powers this program has minor issues.</h4>
 <h4>Unstable code overall, keep an eye on it if in use...</h4>
-All cridentials seen in these images are removed.<br>
+Feel free to use the stock client ID (no need to create a new one, <a href="https://github.com/Yazaar/AutoTTVLurker/archive/master.zip">download</a> and jump to the last page)<br>
 Please, do not specify more than 100 channels. That is the limit for each request to twitch. Thanks :)
 <h3>Setup:</h3>
 Click on the images for better quality!
