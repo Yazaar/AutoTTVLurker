@@ -15,6 +15,7 @@ with open("Settings.json", "r") as f:
 WaitTime = json_data["check_streams_interval"]
 WaitTime2 = json_data["loop_interval"]
 OAuth = json_data["client_id"]
+last_success = []
 
 print("Check streams interval: " + str(WaitTime) + " minutes")
 print("Loop thru tabs interval: " + str(WaitTime2) + " minutes")
@@ -94,7 +95,7 @@ def RemoveStream(NewData):
         print(Temp + " removed!")
 
         if NewData in ActiveTabs:
-            driver.switch_to_window(driver.window_handles[ActiveTabs.index(NewData)])
+            driver.switch_to.window(driver.window_handles[ActiveTabs.index(NewData)])
             time.sleep(1)
             driver.close()
             ActiveTabs.remove(NewData)
@@ -114,7 +115,7 @@ except Exception:
 
 time.sleep(0.5)
 try:
-    driver.switch_to_window(driver.window_handles[-1])
+    driver.switch_to.window(driver.window_handles[-1])
 except Exception:
     pass
 
@@ -157,7 +158,7 @@ driver.close()
 
 time.sleep(0.5)
 try:
-    driver.switch_to_window(driver.window_handles[0])
+    driver.switch_to.window(driver.window_handles[0])
 except Exception:
     pass
 tkthread.start()
@@ -171,7 +172,7 @@ while True:
     if time.time() - Timestamp2 > 60 * WaitTime2:
         for i in driver.window_handles:
             try:
-                driver.switch_to_window(i)
+                driver.switch_to.window(i)
             except Exception:
                 pass
             time.sleep(1)
@@ -183,7 +184,11 @@ while True:
         Timestamp2 = time.time()
 
     if time.time() - Timestamp > 60 * WaitTime:
-        res = json.loads(requests.get("https://api.twitch.tv/helix/streams" + StreamData, headers={"Client-ID": OAuth}).text)["data"]
+        try:
+            res = json.loads(requests.get("https://api.twitch.tv/helix/streams" + StreamData, headers={"Client-ID": OAuth}).text)["data"]
+            last_success = res.copy()
+        except Exception as e:
+            res = last_success.copy()
         Timestamp = time.time()
         temp = []
         for i in res:
@@ -193,7 +198,7 @@ while True:
             if i == "****":
                 continue
             if i not in temp:
-                driver.switch_to_window(driver.window_handles[ActiveTabs.index(i)])
+                driver.switch_to.window(driver.window_handles[ActiveTabs.index(i)])
                 time.sleep(0.5)
                 driver.close()
                 ActiveTabs.remove(i)
@@ -206,7 +211,7 @@ while True:
                     pass
                 ActiveTabs.append(i)
                 time.sleep(1)
-                driver.switch_to_window(driver.window_handles[-1])
+                driver.switch_to.window(driver.window_handles[-1])
                 while True:
                     try:
                         driver.find_element_by_tag_name("body")
