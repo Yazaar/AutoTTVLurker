@@ -177,6 +177,11 @@ while True:
                 pass
             time.sleep(1)
             try:
+                driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
+                time.sleep(1)
+            except Exception:
+                pass
+            try:
                 driver.find_element_by_id("mature-link").click()
                 time.sleep(2)
             except Exception:
@@ -220,7 +225,13 @@ while True:
                         time.sleep(1)
                 time.sleep(1)
                 try:
+                    driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
+                    time.sleep(1)
+                except Exception:
+                    pass
+                try:
                     driver.find_element_by_id("mature-link").click()
+                    time.sleep(2)
                 except Exception:
                     pass
     else:
