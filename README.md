@@ -1,5 +1,5 @@
 <h1>Auto TTV Lurker</h1>
-<h4>Warning, the remote which powers this program has minor issues.</h4>
+<h4>Warning, chromedriver.exe may have to be swapped out for your use, check what crome version you are on (3 dots top right >> help >> about chrome)<br>76.0.3809.132 = version 76 | download a version that support yours <a target="_blank" rel="noopener noreferrer" href="https://chromedriver.chromium.org/downloads">HERE</a></h4>
 <h4>Unstable code overall, keep an eye on it if in use...</h4>
 Feel free to use the stock client ID (no need to create a new one, <a href="https://github.com/Yazaar/AutoTTVLurker/archive/master.zip">download</a> and jump to the last image)<br>
 Please, do not specify more than 100 channels. That is the limit for each request to twitch. Thanks :)
