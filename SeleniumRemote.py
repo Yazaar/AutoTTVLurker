@@ -182,7 +182,7 @@ while True:
             except Exception:
                 pass
             try:
-                driver.find_element_by_id("mature-link").click()
+                driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
                 time.sleep(2)
             except Exception:
                 time.sleep(1)
@@ -230,7 +230,7 @@ while True:
                 except Exception:
                     pass
                 try:
-                    driver.find_element_by_id("mature-link").click()
+                    driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
                     time.sleep(2)
                 except Exception:
                     pass
