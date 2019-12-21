@@ -1,13 +1,6 @@
 from selenium import webdriver
-import time, ctypes, tkinter, threading, requests, json, pickle, os
-
-
-#-------------
-# CONFIG START
-#-------------
-
-# (minutes)   Interval to check twitch API for online and offline streams
-#WaitTime = 15
+from selenium.webdriver.chrome.options import Options
+import time, ctypes, tkinter, threading, requests, json, pickle, os, string, datetime
 
 with open("Settings.json", "r") as f:
     json_data = json.load(f)
@@ -16,6 +9,8 @@ WaitTime = json_data["check_streams_interval"]
 WaitTime2 = json_data["loop_interval"]
 OAuth = json_data["client_id"]
 last_success = []
+ScreenshotsToggle = False
+ScreenshotSession = ''
 
 print("Check streams interval: " + str(WaitTime) + " minutes")
 print("Loop thru tabs interval: " + str(WaitTime2) + " minutes")
@@ -32,10 +27,6 @@ for i in Streams:
     else:
         StreamData += "&user_login=" + i.lower()
 
-#-------------
-# CONFIG END
-#-------------
-
 QueueQuit = False
 
 def bootTk():
@@ -47,8 +38,8 @@ def bootTk():
     ShutdownButton = tkinter.Button(tk, text="Shutdown", command=CloseProgram, bg = "Red", font=("Courier", 30), width=10)
     ShutdownButton.grid(row=0, column=1)
 
-    WhiteSpace1 = tkinter.Label(tk, text="", height = 2)
-    WhiteSpace1.grid(row=1, column=1)
+    TakeScreenshots = tkinter.Button(tk, text="Take screenshots", command=takeScreenshots, bg = "Yellow", width=34)
+    TakeScreenshots.grid(row=1, column=1)
 
     ChangeStreams = tkinter.Entry(tk, bg = "light grey", width=40)
     ChangeStreams.grid(row=2, column=1)
@@ -101,12 +92,38 @@ def RemoveStream(NewData):
             ActiveTabs.remove(NewData)
     ReloadStreams()
 
+def takeScreenshots():
+    global ScreenshotsToggle, Timestamp2, ScreenshotSession
+    ScreenshotSession = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    if not os.path.exists('screenshots\\' + ScreenshotSession):
+        os.makedirs('screenshots\\' + ScreenshotSession)
+    Timestamp2 = time.time() - 60 * WaitTime2
+    ScreenshotsToggle = True
+
+def validateFilename(rawinput):
+    valid_letters = string.ascii_letters + string.digits + ' '
+    valid_letters = list(valid_letters)
+    res = list(rawinput)
+    index = len(rawinput) - 1
+    for _ in rawinput:
+        if not res[index] in valid_letters:
+            res.pop(index)
+        index -= 1
+    return ''.join(res)
+    
+
 tkthread = threading.Thread(target=bootTk)
 tkthread.daemon = True
 
 ActiveTabs = ["****"]
 
-driver = webdriver.Chrome()
+options = Options()
+
+options.add_argument("window-size=800,1000")
+if json_data['headless'] == True:
+    options.add_argument('--headless')
+
+driver = webdriver.Chrome(options=options)
 
 try:
     driver.execute_script('window.open("https://twitch.tv","_blank");')
@@ -118,6 +135,30 @@ try:
     driver.switch_to.window(driver.window_handles[-1])
 except Exception:
     pass
+
+time.sleep(1)
+while True:
+    try:
+        driver.find_element_by_tag_name("body")
+        break
+    except Exception:
+        time.sleep(1)
+time.sleep(1)
+
+try:
+    driver.execute_script('localStorage.setItem("quality-bitrate", 230000)')
+except Exception:
+    pass
+
+try:
+    driver.execute_script('localStorage.setItem("video-quality", "{\\"default\\":\\"160p30\\"}")')
+except Exception:
+    pass
+
+time.sleep(3)
+
+driver.refresh()
+
 
 if os.path.isfile("browserdata.data"):
     with open("browserdata.data", "rb") as f:
@@ -136,6 +177,12 @@ time.sleep(1)
 
 printed = False
 
+try:
+    driver.find_element_by_xpath("//button[@data-a-target='gdpr-banner-accept']").click()
+    time.sleep(1)
+except Exception:
+    pass
+
 while True:
     try:
         driver.find_element_by_xpath("//div[@class='onsite-notifications']")
@@ -143,16 +190,21 @@ while True:
     except Exception:
         if printed == False:
             printed = True
-            print("Please login to your twitch account. I would recommend to put a stream on low quality BEFORE logging in to make all streams low quality.")
+            if json_data['headless'] == True:
+                print("To use headerless mode, please restart the software without headless mode to login!")
+            else:
+                print("Please login to your twitch account. I would recommend to put a stream on low quality BEFORE logging in to make all streams low quality.")
         time.sleep(1)
 
-if json_data["save_data"] == True and printed == True:
+if json_data["save_data"] == True and printed == True and json_data['headless'] == False:
     temp = open("browserdata.data", "wb")
     pickle.dump(driver.get_cookies(), temp)
     temp.close()
 
-if printed == False:
+if printed == False and json_data['headless'] == False:
     ctypes.windll.user32.MessageBoxW(0, "I would recommend to put a stream on low quality before proceeding (to make all streams low quality)\nReady? Click OK", "Ready?", 0x0)
+else:
+    time.sleep(2)
 
 driver.close()
 
@@ -186,7 +238,18 @@ while True:
                 time.sleep(2)
             except Exception:
                 time.sleep(1)
+            if ScreenshotsToggle == True:
+                filename = validateFilename(driver.title)
+                originalFilename = filename
+                separator = 0
+                while filename + '.png' in os.listdir('screenshots\\' + ScreenshotSession):
+                    separator += 1
+                    filename = originalFilename + str(separator)
+                driver.save_screenshot('screenshots\\' + ScreenshotSession + '\\' + filename + '.png')
+                time.sleep(3)
         Timestamp2 = time.time()
+        if ScreenshotsToggle == True:
+            ScreenshotsToggle = False
 
     if time.time() - Timestamp > 60 * WaitTime:
         try:
