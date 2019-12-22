@@ -119,7 +119,7 @@ ActiveTabs = ["****"]
 
 options = Options()
 
-options.add_argument("window-size=800,1000")
+options.add_argument("window-size=1000,1000")
 options.add_argument("log-level=2")
 if json_data['headless'] == True:
     options.add_argument('--headless')
