@@ -1,6 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import time, ctypes, tkinter, threading, requests, json, pickle, os, string, datetime
+import time, ctypes, tkinter, threading, requests, json, pickle, os, string, datetime, pathlib
 
 with open("Settings.json", "r") as f:
     json_data = json.load(f)
@@ -95,8 +95,9 @@ def RemoveStream(NewData):
 def takeScreenshots():
     global ScreenshotsToggle, Timestamp2, ScreenshotSession
     ScreenshotSession = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    if not os.path.exists('screenshots\\' + ScreenshotSession):
-        os.makedirs('screenshots\\' + ScreenshotSession)
+    path = pathlib.Path('screenshots') / ScreenshotSession
+    if not os.path.exists(path):
+        os.makedirs(path)
     Timestamp2 = time.time() - 60 * WaitTime2
     ScreenshotsToggle = True
 
@@ -110,7 +111,127 @@ def validateFilename(rawinput):
             res.pop(index)
         index -= 1
     return ''.join(res)
-    
+
+def startProgram():
+    global ScreenshotsToggle
+    driver.close()
+
+    time.sleep(1)
+    try:
+        driver.switch_to.window(driver.window_handles[0])
+    except Exception:
+        pass
+    tkthread.start()
+    Timestamp = time.time() - 60 * WaitTime
+    Timestamp2 = time.time()
+
+    while True:
+        if QueueQuit == True:
+            break
+
+        if time.time() - Timestamp2 > 60 * WaitTime2:
+            for i in driver.window_handles:
+                try:
+                    driver.switch_to.window(i)
+                except Exception:
+                    pass
+                time.sleep(1)
+                try:
+                    driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
+                    time.sleep(1)
+                except Exception:
+                    pass
+                try:
+                    driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
+                    time.sleep(2)
+                except Exception:
+                    time.sleep(1)
+                if ScreenshotsToggle == True:
+                    filename = validateFilename(driver.title)
+                    originalFilename = filename
+                    separator = 0
+                    while filename + '.png' in os.listdir(pathlib.Path('screenshots') / ScreenshotSession):
+                        separator += 1
+                        filename = originalFilename + str(separator)
+                    driver.save_screenshot(pathlib.Path('screenshots') / ScreenshotSession / (filename + '.png'))
+                    time.sleep(1)
+            Timestamp2 = time.time()
+            if ScreenshotsToggle == True:
+                ScreenshotsToggle = False
+
+        if time.time() - Timestamp > 60 * WaitTime:
+            try:
+                res = json.loads(requests.get("https://api.twitch.tv/helix/streams" + StreamData, headers={"Client-ID": OAuth}).text)["data"]
+                last_success = res.copy()
+            except Exception as e:
+                res = last_success.copy()
+            Timestamp = time.time()
+            temp = []
+            for i in res:
+                if i["type"] == "live":
+                    temp.append(i["user_name"].lower())
+            for i in reversed(ActiveTabs):
+                if i == "****":
+                    continue
+                if i not in temp:
+                    driver.switch_to.window(driver.window_handles[ActiveTabs.index(i)])
+                    time.sleep(0.5)
+                    driver.close()
+                    ActiveTabs.remove(i)
+                    time.sleep(0.5)
+            for i in temp:
+                if not i in ActiveTabs:
+                    try:
+                        driver.execute_script(f'window.open("https://twitch.tv/{i}","_blank");')
+                    except Exception:
+                        pass
+                    ActiveTabs.append(i)
+                    time.sleep(1)
+                    driver.switch_to.window(driver.window_handles[-1])
+                    while True:
+                        try:
+                            driver.find_element_by_tag_name("body")
+                            break
+                        except Exception:
+                            time.sleep(1)
+                    time.sleep(1)
+                    try:
+                        driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
+                        time.sleep(1)
+                    except Exception:
+                        pass
+                    try:
+                        driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
+                        time.sleep(2)
+                    except Exception:
+                        pass
+        else:
+            time.sleep(1)
+
+    raise SystemExit
+
+def popupYesNo(title, message):
+    popup = tkinter.Tk()
+    returnValue = []
+    popup.title(title)
+    popup.protocol("WM_DELETE_WINDOW", CloseProgram)
+
+    def yes():
+        returnValue.append(True)
+        popup.destroy()
+    def no():
+        returnValue.append(False)
+        popup.destroy()
+
+    msg = tkinter.Label(popup, text=message)
+    msg.grid(row=0, column=1)
+    yesBTN = tkinter.Button(popup, text="OK", command=yes, bg = "Green", width=34)
+    yesBTN.grid(row=1, column=1)
+    noBTN = tkinter.Button(popup, text="QUIT", command=no, bg = "Red", width=34)
+    noBTN.grid(row=2, column=1)
+
+    popup.mainloop()
+    return returnValue[0]
 
 tkthread = threading.Thread(target=bootTk)
 tkthread.daemon = True
@@ -156,10 +277,9 @@ try:
 except Exception:
     pass
 
-time.sleep(3)
+time.sleep(1)
 
 driver.refresh()
-
 
 if os.path.isfile("browserdata.data"):
     with open("browserdata.data", "rb") as f:
@@ -203,102 +323,13 @@ if json_data["save_data"] == True and printed == True and json_data['headless'] 
     temp.close()
 
 if printed == False and json_data['headless'] == False:
-    ctypes.windll.user32.MessageBoxW(0, "I would recommend to put a stream on low quality before proceeding (to make all streams low quality)\nReady? Click OK", "Ready?", 0x0)
-else:
-    time.sleep(2)
-
-driver.close()
-
-time.sleep(0.5)
-try:
-    driver.switch_to.window(driver.window_handles[0])
-except Exception:
-    pass
-tkthread.start()
-Timestamp = time.time() - 60 * WaitTime
-Timestamp2 = time.time()
-
-while True:
-    if QueueQuit == True:
-        break
-
-    if time.time() - Timestamp2 > 60 * WaitTime2:
-        for i in driver.window_handles:
-            try:
-                driver.switch_to.window(i)
-            except Exception:
-                pass
-            time.sleep(1)
-            try:
-                driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
-                time.sleep(1)
-            except Exception:
-                pass
-            try:
-                driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
-                time.sleep(2)
-            except Exception:
-                time.sleep(1)
-            if ScreenshotsToggle == True:
-                filename = validateFilename(driver.title)
-                originalFilename = filename
-                separator = 0
-                while filename + '.png' in os.listdir('screenshots\\' + ScreenshotSession):
-                    separator += 1
-                    filename = originalFilename + str(separator)
-                driver.save_screenshot('screenshots\\' + ScreenshotSession + '\\' + filename + '.png')
-                time.sleep(3)
-        Timestamp2 = time.time()
-        if ScreenshotsToggle == True:
-            ScreenshotsToggle = False
-
-    if time.time() - Timestamp > 60 * WaitTime:
-        try:
-            res = json.loads(requests.get("https://api.twitch.tv/helix/streams" + StreamData, headers={"Client-ID": OAuth}).text)["data"]
-            last_success = res.copy()
-        except Exception as e:
-            res = last_success.copy()
-        Timestamp = time.time()
-        temp = []
-        for i in res:
-            if i["type"] == "live":
-                temp.append(i["user_name"].lower())
-        for i in reversed(ActiveTabs):
-            if i == "****":
-                continue
-            if i not in temp:
-                driver.switch_to.window(driver.window_handles[ActiveTabs.index(i)])
-                time.sleep(0.5)
-                driver.close()
-                ActiveTabs.remove(i)
-                time.sleep(0.5)
-        for i in temp:
-            if not i in ActiveTabs:
-                try:
-                    driver.execute_script(f'window.open("https://twitch.tv/{i}","_blank");')
-                except Exception:
-                    pass
-                ActiveTabs.append(i)
-                time.sleep(1)
-                driver.switch_to.window(driver.window_handles[-1])
-                while True:
-                    try:
-                        driver.find_element_by_tag_name("body")
-                        break
-                    except Exception:
-                        time.sleep(1)
-                time.sleep(1)
-                try:
-                    driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
-                    time.sleep(1)
-                except Exception:
-                    pass
-                try:
-                    driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
-                    time.sleep(2)
-                except Exception:
-                    pass
-    else:
+    value = popupYesNo('Continue?', 'I would recommend to put a\nstream on low quality\nbefore proceeding\n(to make all streams low quality)\nReady? Click OK,\nclick QUIT to exit immediately')
+    if value == True:
         time.sleep(1)
-
-raise SystemExit
+        startProgram()
+    else:
+        driver.quit()
+        raise SystemExit
+else:
+    time.sleep(1)
+    startProgram()
