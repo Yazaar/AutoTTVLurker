@@ -37,3 +37,7 @@ Paste your client ID.<br>
 "check_streams_interval" is the amount of minutes before the software checks for streams thru the twitch API.<br>
 "loop_interval" is the amount of minutes before the browser loop thru all tabs, this may be essential to keep streams active (now or in the future).
 <img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step8v2.png">
+This is the configuration that I am using today<br>
+"headless" is new and this hides the chrome window while the program is running which solves a lot of problems<br>
+"clear_screen_command" should not be changed if you are on windows, but different operative systems have different syntax to clear the screen. Change this to match your own operative system. (standards windows: cls, mac: clear, linux: clear) (but might differ)
+<img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step8v3.png">
