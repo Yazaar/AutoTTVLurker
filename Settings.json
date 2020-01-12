@@ -4,5 +4,6 @@
     "loop_interval":1,
     "check_streams_interval":15,
     "client_id":"0t6504p9si25voodfblm9tyfnu3zrx",
-    "headless":false
+    "headless":false,
+    "clear_screen_command":"cls"
 }
