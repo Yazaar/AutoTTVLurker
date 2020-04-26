@@ -1,8 +1,16 @@
 <h1>Auto TTV Lurker</h1>
 <h4>Warning, chromedriver.exe may have to be swapped out for your use, check what crome version you are on (3 dots top right >> help >> about chrome)<br>76.0.3809.132 = version 76 | download a version that support yours <a target="_blank" rel="noopener noreferrer" href="https://chromedriver.chromium.org/downloads">HERE</a></h4>
-<h4>Unstable code overall, keep an eye on it if in use...</h4>
+
+<h2>Temporary version, not using the twitch API, all streams have to be added manually</h2>
+
+Feel free to use the temporary version, open streams manually and they will close automatically whenever the stream is over. It will claim channel points as usual. (no need to add streamers to the settings file, but I would recommend to login to twitch and then enable headless mode in settings.json, set false to true)
+
+
+<h2>Unstable and lost support (Changes to the twitch API happening 2020-05-01</h2>
+
 Feel free to use the stock client ID (no need to create a new one, <a href="https://github.com/Yazaar/AutoTTVLurker/archive/master.zip">download</a> and jump to the last image)<br>
 Please, do not specify more than 100 channels. That is the limit for each request to twitch. Thanks :)
+
 <h3>Setup:</h3>
 Click on the images for better quality!
 <br><br>
@@ -18,6 +26,7 @@ Click on apps, click on applications if you are on the new interface (yeah proba
 You should be here. Click on register your application.
 <img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step4.png">
 <br>
+
 1. Give your project an epic name, does not matter what.<br>
 2. write "http://localhost" in the redirect URL box. Does not really matter in this case either.<br>
 3. Pick the category "Application integration", does not really matter either but make the twitch gods happy.<br>
@@ -37,7 +46,3 @@ Paste your client ID.<br>
 "check_streams_interval" is the amount of minutes before the software checks for streams thru the twitch API.<br>
 "loop_interval" is the amount of minutes before the browser loop thru all tabs, this may be essential to keep streams active (now or in the future).
 <img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step8v2.png">
-This is the configuration that I am using today<br>
-"headless" is new and this hides the chrome window while the program is running which solves a lot of problems<br>
-"clear_screen_command" should not be changed if you are on windows, but different operative systems have different syntax to clear the screen. Change this to match your own operative system. (standards windows: cls, mac: clear, linux: clear) (but might differ)
-<img src="https://raw.githubusercontent.com/Yazaar/Project-Assets/master/AutoTTVLurker/Step8v3.png">

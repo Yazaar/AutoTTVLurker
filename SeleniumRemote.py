@@ -5,29 +5,21 @@ import time, ctypes, tkinter, threading, requests, json, pickle, os, string, dat
 with open("Settings.json", "r") as f:
     json_data = json.load(f)
 
-WaitTime = json_data["check_streams_interval"]
-WaitTime2 = json_data["loop_interval"]
-OAuth = json_data["client_id"]
-last_success = []
+WaitTime = json_data["loop_interval"]
+
 ScreenshotsToggle = False
 ScreenshotSession = ''
 
-print("Check streams interval: " + str(WaitTime) + " minutes")
-print("Loop thru tabs interval: " + str(WaitTime2) + " minutes")
-
-Streams = json_data["streamers"]
-
-print("Streams: " + ", ".join(Streams))
-
-StreamData = ""
-
-for i in Streams:
-    if StreamData == "":
-        StreamData += "?user_login=" + i.lower()
-    else:
-        StreamData += "&user_login=" + i.lower()
+print("Loop through tabs interval: " + str(WaitTime) + " minutes")
 
 QueueQuit = False
+looping = False
+delayedAdds = set()
+delayedRemoves = set()
+
+ActiveTabs = set()
+
+timestamp = time.time()
 
 def bootTk():
 
@@ -60,55 +52,30 @@ def CloseProgram():
     driver.quit()
     QueueQuit = True
 
-def ReloadStreams():
-    global Timestamp, StreamData
-    print(Streams)
-    StreamData = ""
-    for i in Streams:
-        if StreamData == "":
-            StreamData += "?user_login=" + i.lower()
-        else:
-            StreamData += "&user_login=" + i.lower()
-    Timestamp = time.time() - 60 * WaitTime
+def AddStream(streamer):
+    global timestamp
+    if len(streamer) > 0:
+        delayedAdds.add(streamer.lower())
+    timestamp = time.time() - 60 * WaitTime
 
-def AddStream(NewData):
-    global Streams
-    Temp = NewData.replace(" ", "").lower()
-    if Temp != "":
-        if not Temp in Streams:
-            Streams.append(Temp)
-            print(Temp + " added!")
-    ReloadStreams()
-
-def RemoveStream(NewData):
-    global Streams, ActiveTabs
-    Temp = NewData.replace(" ", "")
-    
-    if Temp in Streams:
-        Streams.remove(Temp)
-        print(Temp + " removed!")
-
-        if NewData in ActiveTabs:
-            driver.switch_to.window(driver.window_handles[ActiveTabs.index(NewData)])
-            time.sleep(1)
-            driver.close()
-            ActiveTabs.remove(NewData)
-    ReloadStreams()
+def RemoveStream(streamer):
+    global timestamp
+    if len(streamer) > 0:
+        delayedRemoves.add(streamer.lower())
+    timestamp = time.time() - 60 * WaitTime
 
 def takeScreenshots():
-    global ScreenshotsToggle, Timestamp2, ScreenshotSession
+    global ScreenshotsToggle, timestamp, ScreenshotSession
     ScreenshotSession = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     if not os.path.exists('screenshots\\' + ScreenshotSession):
         os.makedirs('screenshots\\' + ScreenshotSession)
-    Timestamp2 = time.time() - 60 * WaitTime2
+    timestamp = time.time() - 60 * WaitTime
     ScreenshotsToggle = True
 
 def clearScreen():
     os.system(json_data['clear_screen_command'])
-    print("Check streams interval: " + str(WaitTime) + " minutes")
-    print("Loop thru tabs interval: " + str(WaitTime2) + " minutes")
-    print("Streams: " + ", ".join(Streams))
-    print('Active streams: ' + ', '.join(ActiveTabs[1:]))
+    print("Loop through tabs interval: " + str(WaitTime) + " minutes")
+    print('Active streams: ' + ', '.join(ActiveTabs))
 
 def validateFilename(rawinput):
     valid_letters = string.ascii_letters + string.digits + ' '
@@ -121,15 +88,21 @@ def validateFilename(rawinput):
         index -= 1
     return ''.join(res)
 
+def waitForBody():
+    while True:
+        try:
+            driver.find_element_by_tag_name("body")
+            break
+        except Exception:
+            time.sleep(1)
+
 tkthread = threading.Thread(target=bootTk)
 tkthread.daemon = True
-
-ActiveTabs = ["****"]
 
 options = Options()
 
 options.add_argument("window-size=1000,1000")
-options.add_argument("log-level=2")
+options.add_argument("log-level=3")
 if json_data['headless'] == True:
     options.add_argument('--headless')
     options.add_argument("--mute-audio")
@@ -147,15 +120,6 @@ try:
 except Exception:
     pass
 
-time.sleep(1)
-while True:
-    try:
-        driver.find_element_by_tag_name("body")
-        break
-    except Exception:
-        time.sleep(1)
-time.sleep(1)
-
 try:
     driver.execute_script('localStorage.setItem("quality-bitrate", 230000)')
 except Exception:
@@ -166,24 +130,21 @@ try:
 except Exception:
     pass
 
-time.sleep(3)
+time.sleep(1)
 
 driver.refresh()
-
 
 if os.path.isfile("browserdata.data"):
     with open("browserdata.data", "rb") as f:
         temp = pickle.load(f)
         for i in temp:
-            driver.add_cookie(i)
+            try:
+                driver.add_cookie(i)
+            except Exception:
+                pass
     driver.refresh()
 
-while True:
-    try:
-        driver.find_element_by_tag_name("body")
-        break
-    except Exception:
-        time.sleep(1)
+waitForBody()
 time.sleep(1)
 
 printed = False
@@ -202,20 +163,20 @@ while True:
         if printed == False:
             printed = True
             if json_data['headless'] == True:
-                print("To use headerless mode, please restart the software without headless mode to login!")
+                print("To use headerless mode, please restart the software without headless mode to login with save data enabled!")
             else:
                 print("Please login to your twitch account. I would recommend to put a stream on low quality BEFORE logging in to make all streams low quality.")
         time.sleep(1)
 
 if json_data["save_data"] == True and printed == True and json_data['headless'] == False:
-    temp = open("browserdata.data", "wb")
-    pickle.dump(driver.get_cookies(), temp)
-    temp.close()
+    with open("browserdata.data", "wb") as temp:
+        pickle.dump(driver.get_cookies(), temp)
 
-if printed == False and json_data['headless'] == False:
-    ctypes.windll.user32.MessageBoxW(0, "I would recommend to put a stream on low quality before proceeding (to make all streams low quality)\nReady? Click OK", "Ready?", 0x0)
-else:
-    time.sleep(2)
+time.sleep(1)
+#if printed == False and json_data['headless'] == False:
+#    ctypes.windll.user32.MessageBoxW(0, "I would recommend to put a stream on low quality before proceeding (to make all streams low quality)\nReady? Click OK", "Ready?", 0x0)
+#else:
+#    time.sleep(0.5)
 
 driver.close()
 
@@ -225,24 +186,66 @@ try:
 except Exception:
     pass
 tkthread.start()
-Timestamp = time.time() - 60 * WaitTime
-Timestamp2 = time.time()
 
 while True:
     if QueueQuit == True:
         break
 
-    if time.time() - Timestamp2 > 60 * WaitTime2:
+    if time.time() - timestamp > 60 * WaitTime:
+        currentDelayedAdds = delayedAdds
+        currentDelayedRemoves = delayedRemoves
+        delayedAdds = set()
+        delayedRemoves = set()
+
+        for streamer in currentDelayedAdds:
+            try:
+                driver.execute_script(f'window.open("https://twitch.tv/{streamer}","_blank");')
+            except Exception:
+                pass
+            time.sleep(0.5)
+            try:
+                driver.switch_to.window(driver.window_handles[-1])
+            except Exception:
+                pass
+            waitForBody()
+            time.sleep(2)
+            try:
+                driver.execute_script(f'document.querySelector("title").innerText="twitchlurk:{streamer}";')
+            except Exception:
+                pass
+
+        newActiveTabs = set()
+        looping = True
         if ScreenshotsToggle == True:
             TakeScreenshots = True
         else:
             TakeScreenshots = False
-        for i in driver.window_handles:
+        i = len(driver.window_handles)-1
+        while i > 0:
             try:
-                driver.switch_to.window(i)
+                driver.switch_to.window(driver.window_handles[i])
             except Exception:
                 pass
             time.sleep(1)
+            isLive = True
+            try:
+                if driver.find_element_by_xpath("//div[contains(@class, 'live-indicator')]").text != 'LIVE':
+                    raise Exception
+            except Exception:
+                isLive = False
+            if driver.title[:11] != 'twitchlurk:':
+                isLive = False
+            if driver.title[11:].lower() in currentDelayedRemoves:
+                isLive = False
+            if isLive == False:
+                driver.close()
+                time.sleep(1)
+                try:
+                    driver.switch_to.window(driver.window_handles[0])
+                except Exception:
+                    pass
+                i -= 1
+                continue
             try:
                 driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
                 time.sleep(1)
@@ -252,70 +255,31 @@ while True:
                 driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
                 time.sleep(2)
             except Exception:
-                time.sleep(1)
+                pass
+            title = driver.title[11:]
+            newActiveTabs.add(title)
             if TakeScreenshots == True:
-                filename = validateFilename(driver.title)
+                filename = validateFilename(title)
                 originalFilename = filename
                 separator = 0
                 while filename + '.png' in os.listdir('screenshots\\' + ScreenshotSession):
                     separator += 1
                     filename = originalFilename + str(separator)
                 driver.save_screenshot('screenshots\\' + ScreenshotSession + '\\' + filename + '.png')
+            i -= 1
+        removedStreams = ActiveTabs - newActiveTabs
+        addedStreams = newActiveTabs - ActiveTabs
+        currentTime = datetime.datetime.now().strftime('%H:%M:%S')
+        if len(removedStreams) > 0:
+            print(f'{currentTime} removed:', ', '.join(removedStreams))
+        if len(addedStreams) > 0:
+            print(f'{currentTime} added:', ', '.join(addedStreams))
+        ActiveTabs = newActiveTabs
         if TakeScreenshots == True:
             ScreenshotsToggle = False
         if ScreenshotsToggle == False:
-            Timestamp2 = time.time()
-
-    if time.time() - Timestamp > 60 * WaitTime:
-        try:
-            res = json.loads(requests.get("https://api.twitch.tv/helix/streams" + StreamData, headers={"Client-ID": OAuth}).text)["data"]
-            last_success = res.copy()
-        except Exception as e:
-            res = last_success.copy()
-        Timestamp = time.time()
-        temp = []
-        for i in res:
-            if i["type"] == "live":
-                temp.append(i["user_name"].lower())
-        for i in reversed(ActiveTabs):
-            if i == "****":
-                continue
-            if i not in temp:
-                print(datetime.datetime.now().strftime('%H:%M:%S') + ' Closed: ' + i)
-                driver.switch_to.window(driver.window_handles[ActiveTabs.index(i)])
-                time.sleep(0.5)
-                driver.close()
-                ActiveTabs.remove(i)
-                time.sleep(0.5)
-                print('Currently open:\n' + ', '.join(ActiveTabs[1:]))
-        for i in temp:
-            if not i in ActiveTabs:
-                print(datetime.datetime.now().strftime('%H:%M:%S') + ' Opened: ' + i)
-                try:
-                    driver.execute_script(f'window.open("https://twitch.tv/{i}","_blank");')
-                except Exception:
-                    pass
-                ActiveTabs.append(i)
-                print('Currently open:\n' + ', '.join(ActiveTabs[1:]))
-                time.sleep(1)
-                driver.switch_to.window(driver.window_handles[-1])
-                while True:
-                    try:
-                        driver.find_element_by_tag_name("body")
-                        break
-                    except Exception:
-                        time.sleep(1)
-                time.sleep(1)
-                try:
-                    driver.find_element_by_xpath("//button[contains(@class, 'tw-button tw-button--success tw-interactive')]").click()
-                    time.sleep(1)
-                except Exception:
-                    pass
-                try:
-                    driver.find_element_by_xpath("//button[@data-a-target='player-overlay-mature-accept']").click()
-                    time.sleep(2)
-                except Exception:
-                    pass
+            timestamp = time.time()
+        looping = False
     else:
         time.sleep(1)
 

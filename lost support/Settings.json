@@ -1,0 +1,9 @@
+{
+    "save_data":true,
+    "streamers":["streamer1", "streamer2", "streamer3", "AndSoOn"],
+    "loop_interval":1,
+    "check_streams_interval":15,
+    "client_id":"0t6504p9si25voodfblm9tyfnu3zrx",
+    "headless":false,
+    "clear_screen_command":"cls"
+}
