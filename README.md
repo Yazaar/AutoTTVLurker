@@ -2,7 +2,7 @@
 <h4>Warning, chromedriver.exe may have to be swapped out for your use, check what crome version you are on (3 dots top right >> help >> about chrome)<br>76.0.3809.132 = version 76 | download a version that support yours <a target="_blank" rel="noopener noreferrer" href="https://chromedriver.chromium.org/downloads">HERE</a></h4>
 
 <h2>Temporary version, not using the twitch API, all streams have to be added manually</h2>
-
+<h5>The depricated version still works, use that one until twitch disables the client id</h5>
 Feel free to use the temporary version, open streams manually and they will close automatically whenever the stream is over. It will claim channel points as usual. (no need to add streamers to the settings file, but I would recommend to login to twitch and then enable headless mode in settings.json, set false to true)
 
 
