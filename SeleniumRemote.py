@@ -198,6 +198,11 @@ while True:
         delayedRemoves = set()
 
         for streamer in currentDelayedAdds:
+            print(streamer, ActiveTabs)
+            if streamer in ActiveTabs:
+                print('try to trick me dude')
+                continue
+            print('opening', streamer)
             try:
                 driver.execute_script(f'window.open("https://twitch.tv/{streamer}","_blank");')
             except Exception:
@@ -280,7 +285,4 @@ while True:
         if ScreenshotsToggle == False:
             timestamp = time.time()
         looping = False
-    else:
-        time.sleep(1)
-
-raise SystemExit
+    time.sleep(1)
