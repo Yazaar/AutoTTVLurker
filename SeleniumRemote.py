@@ -17,7 +17,7 @@ looping = False
 delayedAdds = set()
 delayedRemoves = set()
 
-ActiveTabs = set()
+ActiveTabs = []
 
 timestamp = time.time()
 
@@ -196,13 +196,8 @@ while True:
         currentDelayedRemoves = delayedRemoves
         delayedAdds = set()
         delayedRemoves = set()
-
+        currentTime = datetime.datetime.now().strftime('%H:%M:%S')
         for streamer in currentDelayedAdds:
-            print(streamer, ActiveTabs)
-            if streamer in ActiveTabs:
-                print('try to trick me dude')
-                continue
-            print('opening', streamer)
             try:
                 driver.execute_script(f'window.open("https://twitch.tv/{streamer}","_blank");')
             except Exception:
@@ -214,12 +209,9 @@ while True:
                 pass
             waitForBody()
             time.sleep(2)
-            try:
-                driver.execute_script(f'document.querySelector("title").innerText="twitchlurk:{streamer}";')
-            except Exception:
-                pass
+            ActiveTabs.append(streamer.lower())
+            time.sleep(2)
 
-        newActiveTabs = set()
         looping = True
         if ScreenshotsToggle == True:
             TakeScreenshots = True
@@ -238,11 +230,17 @@ while True:
                     raise Exception
             except Exception:
                 isLive = False
-            if driver.title[:11] != 'twitchlurk:':
+            title = driver.title.split(' ')
+            if len(title) == 3:
+                title = title[0].lower()
+            else:
+                title = title[1].lower()
+            if title != ActiveTabs[i-1]:
                 isLive = False
-            if driver.title[11:].lower() in currentDelayedRemoves:
+            if title in currentDelayedRemoves:
                 isLive = False
             if isLive == False:
+                ActiveTabs.pop(i)
                 driver.close()
                 time.sleep(1)
                 try:
@@ -261,8 +259,6 @@ while True:
                 time.sleep(2)
             except Exception:
                 pass
-            title = driver.title[11:]
-            newActiveTabs.add(title)
             if TakeScreenshots == True:
                 filename = validateFilename(title)
                 originalFilename = filename
@@ -272,17 +268,10 @@ while True:
                     filename = originalFilename + str(separator)
                 driver.save_screenshot('screenshots\\' + ScreenshotSession + '\\' + filename + '.png')
             i -= 1
-        removedStreams = ActiveTabs - newActiveTabs
-        addedStreams = newActiveTabs - ActiveTabs
-        currentTime = datetime.datetime.now().strftime('%H:%M:%S')
-        if len(removedStreams) > 0:
-            print(f'{currentTime} removed:', ', '.join(removedStreams))
-        if len(addedStreams) > 0:
-            print(f'{currentTime} added:', ', '.join(addedStreams))
-        ActiveTabs = newActiveTabs
         if TakeScreenshots == True:
             ScreenshotsToggle = False
-        if ScreenshotsToggle == False:
+        if ScreenshotsToggle == False and len(delayedAdds) == 0 and len(delayedRemoves) == 0:
             timestamp = time.time()
-        looping = False
-    time.sleep(1)
+            looping = False
+    else:
+        time.sleep(1)
