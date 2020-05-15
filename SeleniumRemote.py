@@ -207,9 +207,9 @@ while True:
                 driver.switch_to.window(driver.window_handles[-1])
             except Exception:
                 pass
-            waitForBody()
-            time.sleep(2)
             ActiveTabs.append(streamer.lower())
+            waitForBody()
+            print(f'[{currentTime}] Opened {ActiveTabs[-1]}')
             time.sleep(2)
 
         looping = True
@@ -240,7 +240,8 @@ while True:
             if title in currentDelayedRemoves:
                 isLive = False
             if isLive == False:
-                ActiveTabs.pop(i)
+                print(f'[{currentTime}] Closed {ActiveTabs[i-1]}')
+                ActiveTabs.pop(i-1)
                 driver.close()
                 time.sleep(1)
                 try:
